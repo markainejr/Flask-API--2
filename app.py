@@ -8,7 +8,8 @@ app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db.sqlite')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password1@localhost/cyberTech'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
@@ -58,7 +59,7 @@ def add_product():
     except KeyError:
         return jsonify({"message": "Missing required fields"}), 400  # Return status code 400 for bad request
 
-
+ 
 # Get All Products
 @app.route('/product', methods=['GET'])
 def get_products():
@@ -91,8 +92,24 @@ def update_product(id):
         qty = data.get('qty')
 
         # Check for missing required fields
-        if not name or not description or price is None or  qty is None:
+        if None in (name, description, price, qty):
             return jsonify({"error": "Missing required fields"}), 400
+        
+        # Update product information
+        product.name = name
+        product.description = description
+        product.price = price
+        product.qty = qty
+
+        # Commit changes to the database
+        db.session.commit()
+
+        # Return updated product information
+        return product_schema.jsonify(product), 200
+    except Exception as e:
+        # Handle any unexpected errors
+        return jsonify({"error": str(e)}), 500
+
         
         # Update product information
         product.name = name
